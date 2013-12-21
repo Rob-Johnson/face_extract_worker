@@ -15,5 +15,10 @@ class TestImageManipulation(unittest.TestCase):
         resize_image = image_manipulation.resize_image(self.image, dimensions)
         self.assertEqual(resize_image.size, dimensions)
 
+    def test_grayscale(self):
+        """ Test conversion to grayscale """
+        grayscaled = image_manipulation.grayscale(self.image)
+        self.assertEqual(grayscaled.mode, "L")
+
 if __name__ == '__main__':
     unittest.main()

@@ -14,3 +14,7 @@ from facedet.detector import CascadedDetector
 def resize_image(image, dimensions=(10,10)):
     """ Resize an image according to width and height values """
     return image.resize(dimensions)
+
+def grayscale(image):
+    """ Grayscales a single image """
+    return image.convert("L")
