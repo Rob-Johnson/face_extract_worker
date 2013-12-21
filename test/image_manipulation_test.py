@@ -3,6 +3,7 @@
 import image_manipulation
 import unittest
 import Image
+import os
 from collections import Iterable
 
 class TestImageManipulation(unittest.TestCase):
@@ -25,6 +26,15 @@ class TestImageManipulation(unittest.TestCase):
         """ Test extraction method returns an iterable data structure """
         faces = image_manipulation.extract_faces(self.image)
         self.assertTrue(isinstance(faces, Iterable))
+    
+    def test_images_created(self):
+        """ Test the number of imags created is equal to the number of faces found """
+        faces = image_manipulation.extract_faces(self.image)
+        image_manipulation.create_image_from_region_of_interest(self.image, faces, "/tmp/out")
+        self.assertEqual(len(faces), len(os.listdir("/tmp/out")))
+
+    def cleanup(self):
+        if os.path.exists("out"): os.rmdir("/tmp/out")
 
 if __name__ == '__main__':
     unittest.main()
