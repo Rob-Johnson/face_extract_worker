@@ -30,9 +30,10 @@ def extract_faces(image):
 def create_image_from_region_of_interest(src, regions, output_dir="extracted"):
     """ Given a source image, extract regions of interest """
     """ src is a numpy array """
+    images = []
     for index, region in enumerate(regions):
         src = numpy.asarray(src)
         if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
         extracted = src[region[1]:region[3], region[0]:region[2]]
-        cv2.imwrite('{}/{}_{}.png'.format(output_dir,os.utime, index), extracted)
+        images.append(extracted)
