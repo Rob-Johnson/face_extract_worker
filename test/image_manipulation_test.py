@@ -3,6 +3,7 @@
 import image_manipulation
 import unittest
 import Image
+from collections import Iterable
 
 class TestImageManipulation(unittest.TestCase):
 
@@ -19,6 +20,11 @@ class TestImageManipulation(unittest.TestCase):
         """ Test conversion to grayscale """
         grayscaled = image_manipulation.grayscale(self.image)
         self.assertEqual(grayscaled.mode, "L")
+
+    def test_extract_faces_is_iterable(self):
+        """ Test extraction method returns an iterable data structure """
+        faces = image_manipulation.extract_faces(self.image)
+        self.assertTrue(isinstance(faces, Iterable))
 
 if __name__ == '__main__':
     unittest.main()

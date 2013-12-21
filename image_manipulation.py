@@ -18,3 +18,10 @@ def resize_image(image, dimensions=(10,10)):
 def grayscale(image):
     """ Grayscales a single image """
     return image.convert("L")
+
+def extract_faces(image):
+    """ Extracts the faces from an image, if any """
+    """ Returns the regions of interest for a given face """
+    ar = numpy.asarray(image)
+    detector = CascadedDetector(minNeighbors=1)
+    return detector.detect(ar)
