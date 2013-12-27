@@ -4,6 +4,7 @@ import sys
 import numpy
 import cv2
 import pprint
+import logging
 
 ## add the facerec module to the path - it's not available as a pip install yet
 sys.path.append('./facerec/py')
@@ -11,13 +12,17 @@ sys.path.append('./facerec/py')
 import Image
 from facedet.detector import CascadedDetector
 
+log = logging.getLogger("IMAGE_MANIPULATION")
+
 
 def resize_image(image, dimensions=(10,10)):
     """ Resize an image according to width and height values """
+    log.debug('resizing image')
     return image.resize(dimensions)
 
 def grayscale(image):
     """ Grayscales a single image """
+    log.debug('grayscaling image')
     return image.convert("L")
 
 def extract_faces(image):
@@ -27,13 +32,12 @@ def extract_faces(image):
     detector = CascadedDetector(minNeighbors=1)
     return detector.detect(ar)
 
-def create_image_from_region_of_interest(src, regions, output_dir="extracted"):
+def extract_regions_of_interest(src, regions):
     """ Given a source image, extract regions of interest """
     """ src is a numpy array """
     images = []
     for index, region in enumerate(regions):
         src = numpy.asarray(src)
-        if not os.path.exists(output_dir):
-                os.makedirs(output_dir)
         extracted = src[region[1]:region[3], region[0]:region[2]]
         images.append(extracted)
+        return images
