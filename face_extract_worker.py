@@ -6,12 +6,17 @@ import s3_tools
 import Image
 import json
 import requests
+import os
 from StringIO import StringIO
 
 class FaceExtractWorker:
-    def __init__(self):
-        rmq_connection = pika.BlockingConnection(pika.ConnectionParameters(
-            host='localhost'))
+    def __init__(self, rmq_uri):
+        try:
+            rmq_connection = pika.BlockingConnection(pika.ConnectionParameters(
+                host=rmq_uri))
+        except Exception:
+            logger.fatal("No connection to rmq available")
+
         self.rmq_channel = rmq_connection.channel()
         self.rmq_channel.queue_declare(queue='user_images', durable=True)
         self.s3_connection = s3_tools.connect()
@@ -31,7 +36,7 @@ class FaceExtractWorker:
         normalized = image_manipulation.grayscale(
                         image_manipulation.resize_image(get_image(image_url)))
 
-        [s3_tools.upload_file_to_bucket(user_bucket, '{}_{}_{}'.format(user,photo_id,index), extracted) for index, extracted in enumerate(roi)]
+
         roi = image_manipulation.extract_faces(normalized)
         logger.debug('found %d regions of interest', len(roi))
         user_bucket = s3_tools.get_or_create_bucket(self.s3_connection, '{}'.format(user))
@@ -45,5 +50,8 @@ def get_image(url):
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger("FACE_EXTRACT_WORKER")
-    worker = FaceExtractWorker()
+
+    location = lambda uri: uri if uri is not None else 'localhost'
+    worker = FaceExtractWorker(location(os.environ.get('RABBIT_MQ_URI')))
+
     worker.consume()
