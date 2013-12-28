@@ -52,6 +52,6 @@ if __name__ == "__main__":
     logger = logging.getLogger("FACE_EXTRACT_WORKER")
 
     location = lambda uri: uri if uri is not None else 'localhost'
-    worker = FaceExtractWorker(location(os.environ.get('RABBIT_MQ_URI')))
+    worker = FaceExtractWorker(location(os.environ.get('RABBITMQ_URI')))
 
     worker.consume()
