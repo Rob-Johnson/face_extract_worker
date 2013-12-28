@@ -40,4 +40,4 @@ def extract_regions_of_interest(src, regions):
         src = numpy.asarray(src)
         extracted = src[region[1]:region[3], region[0]:region[2]]
         images.append(extracted)
-        return images
+    return images
