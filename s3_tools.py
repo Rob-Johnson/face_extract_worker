@@ -16,13 +16,16 @@ def connect(aws_access_key_id=None, aws_secret_access_key=None):
         log.debug('Falling back to ENV variables $AWS_ACCESS_KEY && $AWS_SECRET_KEY')
         return boto.connect_s3(aws_access_key_id, aws_secret_access_key)
 
-def upload_file_to_bucket(bucket, key_name, source):
+def upload_string_to_bucket(bucket, key_name, source):
     """ uploads a file to a named S3 bucket """
     log.debug('uploading to key_name %s', key_name)
-    log.debug('uploading content %s', source)
-    key = boto.s3.key.Key(bucket)
-    key.key = key_name
+
+    #get the key
+    key = bucket.new_key(key_name)
+
+    #set the contents of the key
     key.set_contents_from_string(source)
+
 
 def get_or_create_bucket(conn, bucket_name):
     """ get or create a bucket """
