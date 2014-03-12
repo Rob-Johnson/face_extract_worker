@@ -99,12 +99,13 @@ if __name__ == "__main__":
 
     default_param = lambda param, default: param if param is not None else default
     env_param = lambda x: os.getenv(x)
-    creds = pika.PlainCredentials(default_param('RMQ_ENV_USER', 'guest'),
-                                        default_param('RMQ_ENV_PASS', 'guest'))
 
-    params=pika.ConnectionParameters(host= default_param(env_param('RMQ_PORT_5672_TCP_ADDR'), ''),
-                                      port= default_param(env_param('RMQ_PORT_5672_TCP_PORT'), 5672),
-                                      credentials = creds)
+    creds = pika.PlainCredentials(default_param(env_param('RMQ_ENV_USER'), 'guest'),
+                                        default_param(env_param('RMQ_ENV_PASS'), 'guest'))
+
+    params=pika.ConnectionParameters(host = default_param(env_param('RMQ_PORT_5672_TCP_ADDR'), 'localhost'),
+                                     port = default_param(env_param('RMQ_PORT_5672_TCP_PORT'), 5672),
+                                     credentials = creds)
 
     worker = FaceExtractWorker(params)
     worker.consume()
