@@ -26,6 +26,11 @@ def upload_string_to_bucket(bucket, key_name, source):
     #set the contents of the key
     key.set_contents_from_string(source)
 
+    #make it public
+    key.set_acl('public-read')
+
+    return key
+
 
 def get_or_create_bucket(conn, bucket_name):
     """ get or create a bucket """
@@ -34,4 +39,6 @@ def get_or_create_bucket(conn, bucket_name):
     if bucket is None:
         log.debug('bucket doesnt exist. creating bucket %s', bucket_name)
         bucket = conn.create_bucket(bucket_name)
+        bucket.set_acl('public-read')
     return bucket
+
