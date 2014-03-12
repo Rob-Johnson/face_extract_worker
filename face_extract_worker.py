@@ -10,10 +10,9 @@ import os
 import cStringIO
 
 class FaceExtractWorker:
-    def __init__(self, rmq_uri):
+    def __init__(self, connection_params):
         try:
-            rmq_connection = pika.BlockingConnection(pika.ConnectionParameters(
-                host=rmq_uri))
+            rmq_connection = pika.BlockingConnection(connection_params)
         except Exception:
             logger.fatal("No connection to rmq available")
 
@@ -70,7 +69,14 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger("FACE_EXTRACT_WORKER")
 
-    location = lambda uri: uri if uri is not None else 'localhost'
-    worker = FaceExtractWorker(location(os.environ.get('RABBITMQ_URI')))
+    default_param = lambda param, default: param if param is not None else default
+    env_param = lambda x: os.getenv(x)
+    creds = pika.PlainCredentials(default_param('RMQ_ENV_USER', 'guest'),
+                                        default_param('RMQ_ENV_PASS', 'guest'))
 
+    params=pika.ConnectionParameters(host= default_param(env_param('RMQ_PORT_5672_TCP_ADDR'), ''),
+                                      port= default_param(env_param('RMQ_PORT_5672_TCP_PORT'), 5672),
+                                      credentials = creds)
+
+    worker = FaceExtractWorker(params)
     worker.consume()
