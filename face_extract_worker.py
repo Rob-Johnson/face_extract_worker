@@ -8,6 +8,7 @@ import json
 import requests
 import os
 import cStringIO
+import json
 
 class FaceExtractWorker:
     def __init__(self, rmq_uri):
@@ -18,15 +19,20 @@ class FaceExtractWorker:
             logger.fatal("No connection to rmq available")
 
         self.rmq_channel = rmq_connection.channel()
-        self.result_queue = self.rmq_channel.queue_declare(queue="user_images", durable=True)
+        self.rmq_channel.basic_qos(prefetch_count=1)
 
-        self.queue_name = self.result_queue.method.queue
+        self.result_queue = self.rmq_channel.queue_declare(queue="user_images", durable=True)
+        self.result_queue_name = self.result_queue.method.queue
+
+        self.image_creation_queue = self.rmq_channel.queue_declare(queue="user_image_creation", durable=True)
+        self.creation_queue_name = self.image_creation_queue.method.queue
+
         self.s3_connection = s3_tools.connect()
 
     def consume(self):
         """ Bind to the worker queue """
         self.rmq_channel.basic_consume(self.extract_upload,
-                queue=self.queue_name)
+                queue=self.result_queue_name)
         self.rmq_channel.start_consuming()
 
     def extract_upload(self,ch, method, properties, body):
@@ -53,14 +59,36 @@ class FaceExtractWorker:
             cropped.append(image_buffer)
 
         #find the bucket to upload to
-        user_bucket = s3_tools.get_or_create_bucket(self.s3_connection, 'robj_{}_unconfirmed'.format(user))
+        user_bucket = s3_tools.get_or_create_bucket(self.s3_connection, 'robj_findme')
+
+
+        #the created keys
+        created_keys = []
 
         #upload each cropped image to s3
         for index, extracted in enumerate(cropped):
-            s3_tools.upload_string_to_bucket(user_bucket, '{}_{}_{}'.format(user,photo_id,index), extracted.getvalue())
+            created_keys.append(s3_tools.upload_string_to_bucket(user_bucket, '{}_{}_{}'.format(user,photo_id,index), extracted.getvalue()))
+
+        for key in created_keys:
+            #post the body back to the image_creation_queue
+            self.rmq_channel.basic_publish(exchange='',
+                    routing_key=self.creation_queue_name,
+                    body = json.JSONEncoder().encode({
+                            "url": 'https://{host}/{bucket}/{key}'.format(
+                                host=self.s3_connection.server_name(),
+                                bucket= user_bucket.name,
+                                key= key.name ),
+                            "user_id": user,
+                            "original_image_url": image_url
+                            }),
+                    properties=pika.BasicProperties(
+                        delivery_mode = 2, # make message persistent
+                        )
+                    )
+            logger.info('Published image to image creation queue')
 
         #we're done, so acknowledge the message
-        ch.basic_ack(delivery_tag = method.delivery_tag)
+        self.rmq_channel.basic_ack(delivery_tag = method.delivery_tag)
 
 def get_image(url):
     response = requests.get(url)
