@@ -38,8 +38,6 @@ def crop_face(src, region):
     """ src is a numpy array """
     log.debug("cropping faces")
 
-    src = numpy.asarray(src) 
+    src = numpy.asarray(src)
     new_image = Image.fromarray(src[region[1]:region[3], region[0]:region[2]])
-    
-    new_image.show()
     return new_image

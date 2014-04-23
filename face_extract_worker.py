@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import logging
 import pika
-import image_manipulation 
+import image_manipulation
 import s3_tools
 import Image
 import json
@@ -58,7 +58,7 @@ class FaceExtractWorker:
             cropped.append(image_buffer)
 
         #find the bucket to upload to
-        user_bucket = s3_tools.get_or_create_bucket(self.s3_connection, 'robj_findme')
+        user_bucket = s3_tools.get_or_create_bucket(self.s3_connection, 'robj.findme')
 
 
         #the created keys
@@ -66,17 +66,13 @@ class FaceExtractWorker:
 
         #upload each cropped image to s3
         for index, extracted in enumerate(cropped):
-            created_keys.append(s3_tools.upload_string_to_bucket(user_bucket, '{}_{}_{}'.format(user,photo_id,index), extracted.getvalue()))
-
+            created_keys.append(s3_tools.upload_string_to_bucket(user_bucket, 'user_images/{}_{}_{}'.format(user,photo_id,index), extracted.getvalue()))
         for key in created_keys:
             #post the body back to the image_creation_queue
             self.rmq_channel.basic_publish(exchange='',
                     routing_key=self.creation_queue_name,
                     body = json.JSONEncoder().encode({
-                            "url": 'https://{host}/{bucket}/{key}'.format(
-                                host=self.s3_connection.server_name(),
-                                bucket= user_bucket.name,
-                                key= key.name ),
+                            "key": key.name,
                             "user_id": user,
                             "original_image_url": image_url
                             }),
