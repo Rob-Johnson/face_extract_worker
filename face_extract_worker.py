@@ -38,7 +38,6 @@ class FaceExtractWorker:
         """ JSON Payload should look like {'user_id':1234, 'picture':'http://foo.bar', 'id':'facebook_image_id'} """
 
         logger.info('Processing Record')
-        logger.debug('Message Body: %s', body.encode('utf-8'))
         body = json.loads(body)
         image_url, user, photo_id = body['source'], body['user_id'], body['id']
         normalized = image_manipulation.grayscale(
