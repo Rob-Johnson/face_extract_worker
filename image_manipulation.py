@@ -1,9 +1,10 @@
 #!/usr/bin/env python
-import os
+
+""" Provides image manipulation methods for extracting faces from images
+    using haar cascades """
+
 import sys
 import numpy
-import cv2
-import pprint
 import logging
 
 ## add the facerec module to the path - it's not available as a pip install yet
@@ -12,7 +13,15 @@ sys.path.append('./facerec/py')
 import Image
 from facedet.detector import CascadedDetector
 
-log = logging.getLogger("IMAGE_MANIPULATION")
+#configure logging to be consistent with rest of package
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+formatter = logging.Formatter(
+        "%(asctime)s - %(threadName)s - %(levelname)s - %(message)s")
+streamhandler = logging.StreamHandler()
+streamhandler.setLevel(logging.DEBUG)
+streamhandler.setFormatter(formatter)
+log.addHandler(streamhandler)
 
 
 def resize_image(image, dimensions=(500,500)):

@@ -12,10 +12,13 @@ import json
 
 class FaceExtractWorker:
     def __init__(self, connection_params):
+        self.logger = logging.getLogger(__name__)
+        self.logger.debug("Got here")
         try:
             rmq_connection = pika.BlockingConnection(connection_params)
+            self.logger.debug("Obtained connection to rmq")
         except Exception:
-            logger.fatal("No connection to rmq available")
+            self.logger.fatal("No connection to rmq available")
 
         self.rmq_channel = rmq_connection.channel()
         self.rmq_channel.basic_qos(prefetch_count=1)
@@ -37,7 +40,7 @@ class FaceExtractWorker:
     def extract_upload(self,ch, method, properties, body):
         """ JSON Payload should look like {'user_id':1234, 'picture':'http://foo.bar', 'id':'facebook_image_id'} """
 
-        logger.info('Processing Record')
+        self.logger.info('Processing Record')
         body = json.loads(body)
         image_url, user, photo_id = body['source'], body['user_id'], body['id']
         normalized = image_manipulation.grayscale(
@@ -46,7 +49,7 @@ class FaceExtractWorker:
 
         #find roi's
         roi = image_manipulation.find_faces(normalized)
-        logger.debug('found %d regions of interest', len(roi))
+        self.logger.debug('found %d regions of interest', len(roi))
 
         #crop images to get faces
         cropped = []
@@ -79,7 +82,7 @@ class FaceExtractWorker:
                         delivery_mode = 2, # make message persistent
                         )
                     )
-            logger.info('Published image to image creation queue')
+            self.logger.info('Published image to image creation queue')
 
         #we're done, so acknowledge the message
         self.rmq_channel.basic_ack(delivery_tag = method.delivery_tag)
@@ -88,9 +91,16 @@ def get_image(url):
     response = requests.get(url)
     return Image.open(cStringIO.StringIO(response.content))
 
+
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
-    logger = logging.getLogger("FACE_EXTRACT_WORKER")
+    log = logging.getLogger(__name__)
+    log.setLevel(logging.DEBUG)
+    formatter = logging.Formatter(
+             "%(asctime)s - %(threadName)s - %(levelname)s - %(message)s")
+    streamhandler = logging.StreamHandler()
+    streamhandler.setLevel(logging.DEBUG)
+    streamhandler.setFormatter(formatter)
+    log.addHandler(streamhandler)
 
     default_param = lambda param, default: param if param is not None else default
     env_param = lambda x: os.getenv(x)
