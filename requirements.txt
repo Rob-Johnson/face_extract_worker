@@ -8,6 +8,6 @@ itsdangerous==0.23
 mercurial==2.8.1
 numpy==1.6.1
 pika==0.9.13
-requests==2.1.0
+requests==2.20.0
 urllib3==1.7.1
 wsgiref==0.1.2
